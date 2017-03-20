@@ -33,4 +33,12 @@ public class Iris{
 
         this.classification = classification;
     }
+
+    /**
+     * Returns an array of the Iris data.
+     * @return
+     */
+    public double[] getArrayOfData(){
+        return new double[]{sepalLength, sepalWidth, petalLength, petalWidth};
+    }
 }
