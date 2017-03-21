@@ -20,6 +20,7 @@ public class IrisClassifier {
 
     public IrisClassifier(){
         trainingSet = new HashSet<Iris>();
+        testSet = new HashSet<Iris>();
     }
 
     /**
@@ -65,6 +66,8 @@ public class IrisClassifier {
                 Iris data = new Iris(sl,sw,pl,pw,classification);
                 // Add the new data point to the set of training data:
                 to.add(data);
+
+                System.out.println(data.toString());
 
                 // Read the next line:
                 line = r.readLine();
@@ -139,5 +142,12 @@ public class IrisClassifier {
 
         main.readTrainingData("iris-training.txt");
         main.readTestData("iris-test.txt");
+
+        // Test with one sample
+        Iris[] n = main.getNeighbours(new Iris(5.7,2.8, 4.1, 1.3, null), 5);
+
+        for(Iris i : n){
+            System.out.println(i.toString());
+        }
     }
 }
