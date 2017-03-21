@@ -38,7 +38,13 @@ public class Iris{
      * Returns an array of the Iris data.
      * @return
      */
-    public double[] getArrayOfData(){
+    public double[] getArray(){
         return new double[]{sepalLength, sepalWidth, petalLength, petalWidth};
+    }
+
+    @Override
+    public String toString(){
+        return String.format("%.1f  %.1f  %.1f  %.1f  %s",
+                sepalLength,sepalWidth,petalLength,petalWidth,classification);
     }
 }
