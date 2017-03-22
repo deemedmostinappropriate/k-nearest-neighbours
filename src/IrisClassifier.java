@@ -28,7 +28,7 @@ public class IrisClassifier {
      * training data.
      * @param fileName
      */
-    public void readTrainingData(String fileName){
+    public void readTrainingData(String fileName) throws IOException{
         readIrisData(fileName, trainingSet);
     }
 
@@ -37,7 +37,7 @@ public class IrisClassifier {
      * testing data.
      * @param fileName
      */
-    public void readTestData(String fileName){
+    public void readTestData(String fileName) throws IOException{
         readIrisData(fileName, testSet);
     }
 
@@ -46,37 +46,32 @@ public class IrisClassifier {
      * @param fileName
      * @param to
      */
-    private void readIrisData(String fileName, Set<Iris> to){
-        try {
-            File f = new File(fileName);
-            BufferedReader r = new BufferedReader(new FileReader(f));
+    private void readIrisData(String fileName, Set<Iris> to) throws IOException{
+        File f = new File(fileName);
+        BufferedReader r = new BufferedReader(new FileReader(f));
 
-            String line = r.readLine();
-            while(line != null){
-                // Split the line given line by commas:
-                String[] split = line.split("  ");
+        String line = r.readLine();
+        while(line != null){
+            // Split the line given line by commas:
+            String[] split = line.split("  ");
 
-                double sl = Double.valueOf(split[0]);
-                double sw = Double.valueOf(split[1]);
-                double pl = Double.valueOf(split[2]);
-                double pw = Double.valueOf(split[3]);
-                String classification = split[4];
+            double sl = Double.valueOf(split[0]);
+            double sw = Double.valueOf(split[1]);
+            double pl = Double.valueOf(split[2]);
+            double pw = Double.valueOf(split[3]);
+            String classification = split[4];
 
-                // Create a new Iris data object from the line:
-                Iris data = new Iris(sl,sw,pl,pw,classification);
-                // Add the new data point to the set of training data:
-                to.add(data);
+            // Create a new Iris data object from the line:
+            Iris data = new Iris(sl,sw,pl,pw,classification);
+            // Add the new data point to the set of training data:
+            to.add(data);
 
-                System.out.println(data.toString());
-
-                // Read the next line:
-                line = r.readLine();
-            }
-
-            r.close();
-        } catch(IOException e){
-            System.out.println(e.getMessage());
+            // Read the next line:
+            line = r.readLine();
         }
+
+        r.close();
+
     }
 
     /**
@@ -101,7 +96,10 @@ public class IrisClassifier {
         return Math.sqrt(distance);
     }
 
-    public Iris[] getNeighbours(Iris testData, int k){
+    public Iris[] getNeighbours(Iris testData, int k) throws Error{
+        if(k % 2 == 0)
+            throw new Error("k-value must be odd numbered.");
+
         List<Double> distances = new ArrayList<Double>();
         Map<Double, Iris> distancesToData = new HashMap<Double, Iris>();
 
@@ -124,30 +122,76 @@ public class IrisClassifier {
         // only returning as much as asked for by k:
         for(int i = 0; i < k; ++i){
             sortedResult[i] = distancesToData.get(distances.get(i));
-            System.out.println(distances.get(i));
         }
 
         // Return only as many result as asked for by the k value:
         return sortedResult;
     }
 
-    private void printTrainingData(){
-        for(Iris i : trainingSet){
-            System.out.println(i.toString());
+    public Map<String, Double> getCertainty(Iris testSample, Iris[] neighbours){
+        // Order relates to the classification strings: {s, vc, vg}
+        int[] irisClassCount = {0, 0, 0};
+
+        // Increase classification counts:
+        for(Iris i : neighbours){
+            if(i.classification.equals(s)) {
+                irisClassCount[0] = irisClassCount[0]+1;
+            } else if(i.classification.equals(vc)) {
+                irisClassCount[1] = irisClassCount[1]+1;
+            } else {
+                irisClassCount[2] = irisClassCount[2]+1;
+            }
         }
+        // Map for putting the predictions certainty into:
+        Map<String, Double> certainty = new HashMap<String, Double>();
+
+        // Put the classifications and their likelihood into the map
+        certainty.put(s, (double)irisClassCount[0]/neighbours.length);
+        certainty.put(vc, (double)irisClassCount[1]/neighbours.length);
+        certainty.put(vg, (double)irisClassCount[2]/neighbours.length);
+
+        // Return the certainty map:
+        return certainty;
+    }
+
+    public Set<Iris> getTrainingSet(){
+        return trainingSet;
+    }
+
+    public Set<Iris> getTestSet(){
+        return testSet;
     }
 
     public static void main(String[] args){
         IrisClassifier main = new IrisClassifier();
 
-        main.readTrainingData("iris-training.txt");
-        main.readTestData("iris-test.txt");
-
-        // Test with one sample
-        Iris[] n = main.getNeighbours(new Iris(5.7,2.8, 4.1, 1.3, null), 5);
-
-        for(Iris i : n){
-            System.out.println(i.toString());
+        // Read the given arguments as training and testing data:
+        try {
+            main.readTrainingData("iris-training.txt");
+            main.readTestData("iris-test.txt");
+        }catch(IOException e){ // If the file names are wrong/file doesnt exist:
+            System.out.print("Error with reading file: " + e.getMessage());
+            System.exit(1);
         }
+
+        // Run the neighbours calculation on the test set:
+        for(Iris i : main.getTestSet()){
+            Iris[] neighbours = main.getNeighbours(i, 5);
+
+            // Retrieve the certainty of each possible classification:
+            Map<String, Double> certainty = main.getCertainty(i, neighbours);
+
+            // Print Iris Sample, Predicted Result and Likelihood:
+            System.out.printf("Test Instance: %s \n\t Likelihood:\n", i.toString());
+
+            for(Map.Entry<String, Double> e : certainty.entrySet()){
+                System.out.printf("\t\t%s - certainty: %.2f\n", e.getKey(), e.getValue());
+            }
+
+            System.out.print("\n");
+        }
+
+        // Success exit:
+        System.exit(0);
     }
 }
