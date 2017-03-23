@@ -45,6 +45,7 @@ public class IrisClassifier {
      * Reads the data of Iris classifications from the given file and places it in the given set.
      * @param fileName
      * @param to
+     * @throws IOException
      */
     private void readIrisData(String fileName, Set<Iris> to) throws IOException{
         File f = new File(fileName);
@@ -70,8 +71,8 @@ public class IrisClassifier {
             line = r.readLine();
         }
 
+        // Close the reader:
         r.close();
-
     }
 
     /**
@@ -154,10 +155,6 @@ public class IrisClassifier {
         return certainty;
     }
 
-    public Set<Iris> getTrainingSet(){
-        return trainingSet;
-    }
-
     public Set<Iris> getTestSet(){
         return testSet;
     }
@@ -174,22 +171,46 @@ public class IrisClassifier {
             System.exit(1);
         }
 
+        double totalLikelihood = 0.0;
+        int instances = 0;
+
         // Run the neighbours calculation on the test set:
         for(Iris i : main.getTestSet()){
-            Iris[] neighbours = main.getNeighbours(i, 5);
+            Iris[] neighbours = main.getNeighbours(i, 7);
 
             // Retrieve the certainty of each possible classification:
             Map<String, Double> certainty = main.getCertainty(i, neighbours);
 
-            // Print Iris Sample, Predicted Result and Likelihood:
-            System.out.printf("Test Instance: %s \n\t Likelihood:\n", i.toString());
+            String prediction = "";
+            double likelihood = 0.0;
 
-            for(Map.Entry<String, Double> e : certainty.entrySet()){
-                System.out.printf("\t\t%s - certainty: %.2f\n", e.getKey(), e.getValue());
+            // Find highest predicted value:
+            if(certainty.get(s) > certainty.get(vc) && certainty.get(s) > certainty.get(vg)){
+                // Iris-setosa classification:
+                prediction = s;
+                likelihood = certainty.get(s);
+            } else if(certainty.get(vc) > certainty.get(s) && certainty.get(vc) > certainty.get(vg)){
+                // Iris-versicolor classification:
+                prediction = vc;
+                likelihood = certainty.get(vc);
+            } else if(certainty.get(vg) > certainty.get(vc) && certainty.get(vg) > certainty.get(s)){
+                // Iris-virginica classification:
+                prediction = vg;
+                likelihood = certainty.get(vg);
+            } else{
+                prediction = "try higher k-value";
             }
 
-            System.out.print("\n");
+            // Print Iris Sample, Predicted Result and Likelihood:
+            System.out.printf("Test Instance: %s\tPredicted: %s\t Likelihood: %.2f\n",
+                    i.toString(), prediction, likelihood);
+
+            totalLikelihood += likelihood;
+            ++instances;
         }
+
+        // Calculate Accuracy:
+        System.out.printf("\nTest Size: %d\t Total Accuracy: %.0f%%\n", instances, (totalLikelihood/instances) * 100);
 
         // Success exit:
         System.exit(0);
