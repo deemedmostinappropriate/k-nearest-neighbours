@@ -44,7 +44,16 @@ public class Iris{
 
     @Override
     public String toString(){
-        return String.format("%.1f  %.1f  %.1f  %.1f  %s",
+        return String.format("%.1f,%.1f,%.1f,%.1f,%s",
                 sepalLength,sepalWidth,petalLength,petalWidth,classification);
+    }
+
+    /**
+     * Prints a string consisting only of the values of a data instance.
+     * @return
+     */
+    public String valuesToString(){
+        return String.format("%.1f  %.1f  %.1f  %.1f  ",
+                sepalLength,sepalWidth,petalLength,petalWidth);
     }
 }

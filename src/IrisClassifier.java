@@ -1,10 +1,7 @@
 /**
  * Created by aidandoak on 20/03/17.
  */
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class IrisClassifier {
@@ -159,58 +156,71 @@ public class IrisClassifier {
         return testSet;
     }
 
+
+    /* Main Method */
     public static void main(String[] args){
         IrisClassifier main = new IrisClassifier();
+        int k = 7;
 
         // Read the given arguments as training and testing data:
         try {
-            main.readTrainingData("iris-training.txt");
-            main.readTestData("iris-test.txt");
-        }catch(IOException e){ // If the file names are wrong/file doesnt exist:
-            System.out.print("Error with reading file: " + e.getMessage());
+            main.readTrainingData(args[0]);
+            main.readTestData(args[1]);
+        }catch(Exception e){ // If the file names are wrong/file doesnt exist:
+            System.out.println("Error with reading file.");
+            System.out.println("Useage:\n\t IrisClassifier <trainingDataFile> <testDataFile>");
             System.exit(1);
         }
 
-        double totalLikelihood = 0.0;
-        int instances = 0;
+        double correctInstances = 0;
+        double instances = 0;
 
-        // Run the neighbours calculation on the test set:
-        for(Iris i : main.getTestSet()){
-            Iris[] neighbours = main.getNeighbours(i, 7);
+        File output = new File("predictions.csv");
+        try {
+            PrintWriter writer = new PrintWriter(new FileWriter(output));
 
-            // Retrieve the certainty of each possible classification:
-            Map<String, Double> certainty = main.getCertainty(i, neighbours);
+            // Run the neighbours calculation on the test set:
+            for(Iris i : main.getTestSet()){
+                Iris[] neighbours = main.getNeighbours(i, k);
 
-            String prediction = "";
-            double likelihood = 0.0;
+                // Retrieve the certainty of each possible classification:
+                Map<String, Double> certainty = main.getCertainty(i, neighbours);
 
-            // Find highest predicted value:
-            if(certainty.get(s) > certainty.get(vc) && certainty.get(s) > certainty.get(vg)){
-                // Iris-setosa classification:
-                prediction = s;
-                likelihood = certainty.get(s);
-            } else if(certainty.get(vc) > certainty.get(s) && certainty.get(vc) > certainty.get(vg)){
-                // Iris-versicolor classification:
-                prediction = vc;
-                likelihood = certainty.get(vc);
-            } else if(certainty.get(vg) > certainty.get(vc) && certainty.get(vg) > certainty.get(s)){
-                // Iris-virginica classification:
-                prediction = vg;
-                likelihood = certainty.get(vg);
-            } else{
-                prediction = "try higher k-value";
+                String prediction = "";
+                double likelihood = 0.0;
+
+                // Find highest predicted value:
+                if(certainty.get(s) > certainty.get(vc) && certainty.get(s) > certainty.get(vg)){
+                    // Iris-setosa classification:
+                    prediction = s;
+                    likelihood = certainty.get(s);
+                } else if(certainty.get(vc) > certainty.get(s) && certainty.get(vc) > certainty.get(vg)){
+                    // Iris-versicolor classification:
+                    prediction = vc;
+                    likelihood = certainty.get(vc);
+                } else if(certainty.get(vg) > certainty.get(vc) && certainty.get(vg) > certainty.get(s)){
+                    // Iris-virginica classification:
+                    prediction = vg;
+                    likelihood = certainty.get(vg);
+                } else{
+                    prediction = "try higher k-value";
+                }
+
+                // Write Iris Sample, Predicted Result and Likelihood to results file:
+                writer.printf("%s,%s,%.2f\n", i.toString(), prediction, likelihood);
+
+                if(i.toString().split(",")[4].equals(prediction)){
+                    ++correctInstances;
+                }
+                ++instances;
             }
-
-            // Print Iris Sample, Predicted Result and Likelihood:
-            System.out.printf("Test Instance: %s\tPredicted: %s\t Likelihood: %.2f\n",
-                    i.toString(), prediction, likelihood);
-
-            totalLikelihood += likelihood;
-            ++instances;
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("Error writing results to file: " + output.getName());
         }
 
         // Calculate Accuracy:
-        System.out.printf("\nTest Size: %d\t Total Accuracy: %.0f%%\n", instances, (totalLikelihood/instances) * 100);
+        System.out.printf("\nTest Size: %1.0f\tk-value: %d\tTotal Accuracy: %.1f%%\n", instances, k, (correctInstances/instances) * 100);
 
         // Success exit:
         System.exit(0);
