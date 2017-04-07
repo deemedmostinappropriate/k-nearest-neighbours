@@ -160,15 +160,24 @@ public class IrisClassifier {
     /* Main Method */
     public static void main(String[] args){
         IrisClassifier main = new IrisClassifier();
-        int k = 7;
+        int k = 0;
 
         // Read the given arguments as training and testing data:
         try {
             main.readTrainingData(args[0]);
             main.readTestData(args[1]);
+            k = Integer.parseInt(args[2]);
         }catch(Exception e){ // If the file names are wrong/file doesnt exist:
+            if(e instanceof NumberFormatException){
+                System.out.println("k value must be a number.");
+            }
             System.out.println("Error with reading file.");
-            System.out.println("Useage:\n\t IrisClassifier <trainingDataFile> <testDataFile>");
+            System.out.println("Useage:\n\t IrisClassifier <trainingDataFile> <testDataFile> <k-value>");
+            System.exit(1);
+        }
+
+        if(k % 2 == 0 || k < 1){
+            System.out.println("k value must be positive and odd (1,3,5,7,...)");
             System.exit(1);
         }
 
@@ -179,6 +188,7 @@ public class IrisClassifier {
         try {
             PrintWriter writer = new PrintWriter(new FileWriter(output));
 
+            writer.println("sl,sw,pl,pw,observed,prediction,likelihood");
             // Run the neighbours calculation on the test set:
             for(Iris i : main.getTestSet()){
                 Iris[] neighbours = main.getNeighbours(i, k);
